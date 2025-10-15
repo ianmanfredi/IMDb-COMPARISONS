@@ -26,7 +26,7 @@ function App() {
   // ========== UX: SCROLL REFERENCE ==========
   const comparisonRef = useRef(null);
 
-  // ========== SEARCH LOGIC (unchanged) ==========
+  // ========== SEARCH LOGIC ==========
   const handleSearch = useCallback(async (query, type, page = 1) => {
     if (!query.trim()) return;
     
@@ -60,13 +60,13 @@ function App() {
     setLoading(false);
   }, []);
 
-  // ========== INITIAL LOAD (RECOMMENDATIONS) (unchanged) ==========
+  // ========== INITIAL LOAD (RECOMMENDATIONS) ==========
   useEffect(() => {
     handleSearch("best movies", "", 1);
   }, [handleSearch]);
 
   // =======================================================
-  // 2. SMART HEADER LOGIC (CORREGIDA)
+  // 2. SMART HEADER LOGIC
   const controlHeader = useCallback(() => {
     // Zona segura: si estamos cerca de la parte superior, siempre mostrar.
     const safeZone = 100;
@@ -94,7 +94,7 @@ function App() {
   }, [controlHeader]);
   // =======================================================
 
-  // ========== SELECT ITEM (unchanged) ==========
+  // ========== SELECT ITEM ==========
   const selectItem = async (imdbID) => {
     setLoading(true);
     
@@ -114,7 +114,7 @@ function App() {
     setLoading(false);
   };
 
-  // ========== ADD TO COMPARISON - CORRECTED LOGIC (unchanged) ==========
+  // ========== ADD TO COMPARISON - CORRECTED LOGIC ==========
   const addToComparison = (item) => {
     if (comparison[0] === null) {
       setComparison([item, null]); 
@@ -125,7 +125,7 @@ function App() {
     }
   };
 
-  // ========== NORMALIZE RATINGS (unchanged) ==========
+  // ========== NORMALIZE RATINGS ==========
   const normalizeRating = (source, value) => {
     if (source.includes('Internet Movie Database')) {
         const numericValue = parseFloat(value.split('/')[0]);
@@ -138,7 +138,7 @@ function App() {
     return 0;
   };
 
-  // ========== GET CHART DATA (unchanged) ==========
+  // ========== GET CHART DATA ==========
   const getChartData = () => {
     if (!comparison[0] || !comparison[1]) return [];
 
@@ -158,7 +158,7 @@ function App() {
     });
   };
 
-  // ========== GET RADAR DATA (unchanged) ==========
+  // ========== GET RADAR DATA ==========
   const getRadarData = () => {
     if (!comparison[0] || !comparison[1]) return [];
     
@@ -182,7 +182,7 @@ function App() {
   const totalPages = Math.ceil(totalResults / 10);
   const isFirstItemSelected = comparison[0] !== null && comparison[1] === null;
 
-  // ========== UX: AUTO-SCROLL AJUSTADO (unchanged) ==========
+  // ========== UX: AUTO-SCROLL AJUSTADO ==========
   useEffect(() => {
     if (comparison[0] && comparison[1] && comparisonRef.current) {
       comparisonRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -193,14 +193,12 @@ function App() {
     <div className="min-h-screen bg-gray-900 text-gray-100">
       
       {/* ======================================================= */}
-      {/* HEADER: SMART HEADER IMPLEMENTATION (CORREGIDA) */}
-      {/* Se usa 'style' para el desplazamiento dinámico */}
+      {/* HEADER: SMART HEADER IMPLEMENTATION */}
       <header 
         className={`fixed w-full z-50 bg-gray-800/95 backdrop-blur-lg shadow-xl border-b border-yellow-500/30 transition-all duration-300 ease-out`}
-        // >>> APLICACIÓN DEL DESPLAZAMIENTO NEGATIVO CORRECTA:
         style={{ 
             height: `${headerHeight}px`,
-            top: showHeader ? '0px' : `-${headerHeight}px` // CORREGIDO: Usar propiedad 'style' para el top dinámico.
+            top: showHeader ? '0px' : `-${headerHeight}px`
         }} 
       >
         <div className="container mx-auto px-4 py-3">
@@ -211,7 +209,7 @@ function App() {
             </h1>
           </div>
           
-          {/* SEARCH BAR (Compacta) (unchanged) */}
+          {/* SEARCH BAR (Compacta) */}
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="flex-1 relative">
@@ -253,10 +251,10 @@ function App() {
       {/* CONTENIDO PRINCIPAL: Se mantiene el margen superior para compensar el fixed header */}
       <div 
         className="container mx-auto px-4 py-8" 
-        style={{ paddingTop: `${headerHeight + 32}px` }} // Correcto
+        style={{ paddingTop: `${headerHeight + 32}px` }}
       >
         
-        {/* LOADING (unchanged) */}
+        {/* LOADING */}
         {loading && (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-yellow-500"></div>
@@ -264,14 +262,14 @@ function App() {
           </div>
         )}
 
-        {/* ERROR (unchanged) */}
+        {/* ERROR */}
         {error && !loading && (
           <div className="max-w-2xl mx-auto bg-red-900/30 border border-red-500 rounded-xl p-6 text-center backdrop-blur-sm">
             <p className="text-red-200 text-lg">❌ {error}</p>
           </div>
         )}
 
-        {/* RESULTS (unchanged) */}
+        {/* RESULTS */}
         {results.length > 0 && !loading && (
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-6">
@@ -284,7 +282,7 @@ function App() {
               </span>
             </div>
             
-            {/* FEEDBACK VISUAL: MENSAJE DESPUÉS DE LA PRIMERA SELECCIÓN (unchanged) */}
+            {/* FEEDBACK VISUAL: MENSAJE DESPUÉS DE LA PRIMERA SELECCIÓN */}
             {isFirstItemSelected && (
               <div className="max-w-3xl mx-auto bg-yellow-900/30 border border-yellow-500 rounded-xl p-4 text-center mb-6 backdrop-blur-sm">
                 <p className="text-yellow-200 text-lg font-semibold flex items-center justify-center gap-3">
@@ -343,7 +341,7 @@ function App() {
               ))}
             </div>
 
-            {/* PAGINATION (unchanged) */}
+            {/* PAGINATION */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-8">
                 <button
@@ -368,7 +366,7 @@ function App() {
           </div>
         )}
 
-        {/* COMPARISON SECTION (MODIFICADO) */}
+        {/* COMPARISON SECTION */}
         {(comparison[0] || comparison[1]) && (
           <div className="space-y-8" ref={comparisonRef}> 
             <div className="flex items-center justify-between">
@@ -385,8 +383,8 @@ function App() {
               </button>
             </div>
 
-            {/* COMPARISON CARDS - CORRECCIÓN: Usar items-start para evitar desalineación vertical */}
-            <div className="grid lg:grid-cols-2 gap-8 items-start"> 
+            {/* COMPARISON CARDS - Usar items-start para evitar desalineación vertical */}
+            <div className="grid lg:grid-cols-2 gap-8 items-start"> 
               {/* CARD 1 */}
               <div className={`rounded-2xl p-6 backdrop-blur-sm border-2 transition-all ${
                 comparison[0] 
@@ -420,7 +418,7 @@ function App() {
               </div>
             </div>
 
-            {/* CHARTS (unchanged) */}
+            {/* CHARTS */}
             {comparison[0] && comparison[1] && (
               <div className="grid lg:grid-cols-2 gap-8">
                 {/* BAR CHART */}
@@ -445,7 +443,7 @@ function App() {
                   </ResponsiveContainer>
                 </div>
 
-                {/* RADAR CHART (unchanged) */}
+                {/* RADAR CHART */}
                 <div className="bg-slate-800/50 rounded-2xl p-6 backdrop-blur-sm border border-gray-700">
                   <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                     <Star className="w-6 h-6 text-yellow-500" />
@@ -468,7 +466,7 @@ function App() {
         )}
       </div>
 
-      {/* FOOTER (unchanged) */}
+      {/* FOOTER */}
       <footer className="text-center py-8 text-gray-400 border-t border-gray-700 mt-12">
         <p>Powered by OMDb API • Built with React + Recharts + Vite</p>
       </footer>
@@ -476,7 +474,9 @@ function App() {
   );
 }
 
-// ========== DETAILED CARD COMPONENT (MODIFICADO) ==========
+// =======================================================
+// SEPARACIÓN DEL COMPONENTE DETAILED CARD (para mejor organización)
+// =======================================================
 function DetailCard({ item, color }) {
   const accentColor = color === 'yellow' ? 'text-yellow-400' : 'text-indigo-400';
   const borderColor = color === 'yellow' ? 'border-yellow-500/20' : 'border-indigo-500/20';
@@ -484,12 +484,12 @@ function DetailCard({ item, color }) {
   return (
     <div className="space-y-6">
       <div className="relative rounded-xl overflow-hidden shadow-2xl">
-        {/* CORRECCIÓN: Se envuelve la imagen en un div con altura fija para asegurar la alineación */}
-        <div className="w-full h-64"> 
+        {/* Contenedor con altura fija h-64 para la imagen (alineación) */}
+        <div className="w-full h-64"> 
           <img
             src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=No+Image'}
             alt={item.Title}
-            className="w-full h-full object-cover"  // h-full para que ocupe toda la altura del div padre (h-64)
+            className="w-full h-full object-cover"  
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
@@ -504,7 +504,7 @@ function DetailCard({ item, color }) {
               <Clock className="w-4 h-4" />
               {item.Runtime}
             </span>
-          </div>
+        </div>
         </div>
       </div>
 
@@ -528,7 +528,7 @@ function DetailCard({ item, color }) {
           <p className="text-white text-sm">{item.Actors}</p>
         </div>
 
-        {/* AJUSTE PARA IGUALAR ALTURA DE TARJETAS: h-48 y overflow-y-auto (unchanged) */}
+        {/* Área de Plot con altura fija h-48 para igualar la altura de las tarjetas */}
         <div className={`bg-slate-900/50 rounded-xl p-4 border ${borderColor} h-48 overflow-y-auto`}> 
           <p className="text-gray-400 mb-2">📝 Plot</p>
           <p className="text-gray-300 text-sm leading-relaxed">{item.Plot}</p>
@@ -549,7 +549,7 @@ function DetailCard({ item, color }) {
           </div>
         </div>
       </div>
-      </div>
+    </div>
   );
 }
 
