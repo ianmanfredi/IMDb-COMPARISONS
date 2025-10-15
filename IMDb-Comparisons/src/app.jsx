@@ -173,7 +173,7 @@ function App() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Search movie or series..." {/* TRANSLATED */}
+                  placeholder="Search movie or series..." // CORRECTED: Removed JSX comment here
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-700/50 text-white border border-gray-500/30 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition-all"
                 />
               </div>
