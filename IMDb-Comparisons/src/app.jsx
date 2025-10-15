@@ -14,7 +14,7 @@ function App() {
   const [totalResults, setTotalResults] = useState(0);
   const [comparison, setComparison] = useState([null, null]);
   const [error, setError] = useState('');
-  
+
   // =======================================================
   // 1. SMART HEADER STATE
   // Se asume que el header tiene una altura de ~150px (h-40) para el cálculo de ocultamiento.
@@ -26,20 +26,20 @@ function App() {
   // ========== UX: SCROLL REFERENCE ==========
   const comparisonRef = useRef(null);
 
-  // ========== SEARCH LOGIC ==========
+  // ========== SEARCH LOGIC (unchanged) ==========
   const handleSearch = useCallback(async (query, type, page = 1) => {
     if (!query.trim()) return;
-    
+
     setLoading(true);
     setError('');
     setCurrentPage(page);
-    
+
     try {
       const response = await fetch(
         `${API_URL}?apikey=${API_KEY}&s=${query}&type=${type}&page=${page}`
       );
       const data = await response.json();
-      
+
       if (data.Response === 'True') {
         const shuffledResults = page === 1 && query === "best movies" 
             ? data.Search.sort(() => 0.5 - Math.random()) 
@@ -56,17 +56,17 @@ function App() {
       setError('Error connecting to the API.');
       console.error(err);
     }
-    
+
     setLoading(false);
   }, []);
 
-  // ========== INITIAL LOAD (RECOMMENDATIONS) ==========
+  // ========== INITIAL LOAD (RECOMMENDATIONS) (unchanged) ==========
   useEffect(() => {
     handleSearch("best movies", "", 1);
   }, [handleSearch]);
 
   // =======================================================
-  // 2. SMART HEADER LOGIC
+  // 2. SMART HEADER LOGIC (CORREGIDA)
   const controlHeader = useCallback(() => {
     // Zona segura: si estamos cerca de la parte superior, siempre mostrar.
     const safeZone = 100;
@@ -94,27 +94,27 @@ function App() {
   }, [controlHeader]);
   // =======================================================
 
-  // ========== SELECT ITEM ==========
+  // ========== SELECT ITEM (unchanged) ==========
   const selectItem = async (imdbID) => {
     setLoading(true);
-    
+
     try {
       const response = await fetch(
         `${API_URL}?apikey=${API_KEY}&i=${imdbID}&plot=full`
       );
       const data = await response.json();
-      
+
       if (data.Response === 'True') {
         addToComparison(data);
       }
     } catch (err) {
       console.error('Error fetching details:', err);
     }
-    
+
     setLoading(false);
   };
 
-  // ========== ADD TO COMPARISON - CORRECTED LOGIC ==========
+  // ========== ADD TO COMPARISON - CORRECTED LOGIC (unchanged) ==========
   const addToComparison = (item) => {
     if (comparison[0] === null) {
       setComparison([item, null]); 
@@ -125,7 +125,7 @@ function App() {
     }
   };
 
-  // ========== NORMALIZE RATINGS ==========
+  // ========== NORMALIZE RATINGS (unchanged) ==========
   const normalizeRating = (source, value) => {
     if (source.includes('Internet Movie Database')) {
         const numericValue = parseFloat(value.split('/')[0]);
@@ -138,16 +138,16 @@ function App() {
     return 0;
   };
 
-  // ========== GET CHART DATA ==========
+  // ========== GET CHART DATA (unchanged) ==========
   const getChartData = () => {
     if (!comparison[0] || !comparison[1]) return [];
 
     const sources = ['Internet Movie Database', 'Rotten Tomatoes', 'Metacritic'];
-    
+
     return sources.map(source => {
       const rating1 = comparison[0].Ratings.find(r => r.Source === source);
       const rating2 = comparison[1].Ratings.find(r => r.Source === source);
-      
+
       const displayName = source.replace('Internet Movie Database', 'IMDb').replace('Rotten Tomatoes', 'RT');
 
       return {
@@ -158,10 +158,10 @@ function App() {
     });
   };
 
-  // ========== GET RADAR DATA ==========
+  // ========== GET RADAR DATA (unchanged) ==========
   const getRadarData = () => {
     if (!comparison[0] || !comparison[1]) return [];
-    
+
     const data1 = comparison[0].Ratings;
     const data2 = comparison[1].Ratings;
 
@@ -182,7 +182,7 @@ function App() {
   const totalPages = Math.ceil(totalResults / 10);
   const isFirstItemSelected = comparison[0] !== null && comparison[1] === null;
 
-  // ========== UX: AUTO-SCROLL AJUSTADO ==========
+  // ========== UX: AUTO-SCROLL AJUSTADO (unchanged) ==========
   useEffect(() => {
     if (comparison[0] && comparison[1] && comparisonRef.current) {
       comparisonRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -191,14 +191,16 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      
+
       {/* ======================================================= */}
-      {/* HEADER: SMART HEADER IMPLEMENTATION */}
+      {/* HEADER: SMART HEADER IMPLEMENTATION (CORREGIDA) */}
+      {/* Se usa 'style' para el desplazamiento dinámico */}
       <header 
         className={`fixed w-full z-50 bg-gray-800/95 backdrop-blur-lg shadow-xl border-b border-yellow-500/30 transition-all duration-300 ease-out`}
+        // >>> APLICACIÓN DEL DESPLAZAMIENTO NEGATIVO CORRECTA:
         style={{ 
             height: `${headerHeight}px`,
-            top: showHeader ? '0px' : `-${headerHeight}px`
+            top: showHeader ? '0px' : `-${headerHeight}px` // CORREGIDO: Usar propiedad 'style' para el top dinámico.
         }} 
       >
         <div className="container mx-auto px-4 py-3">
@@ -208,8 +210,8 @@ function App() {
               Movie & Series Comparator
             </h1>
           </div>
-          
-          {/* SEARCH BAR (Compacta) */}
+
+          {/* SEARCH BAR (Compacta) (unchanged) */}
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="flex-1 relative">
@@ -223,7 +225,7 @@ function App() {
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-700/50 text-white border border-gray-500/30 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition-all"
                 />
               </div>
-              
+
               <select
                 value={searchType}
                 onChange={(e) => setSearchType(e.target.value)}
@@ -233,7 +235,7 @@ function App() {
                 <option value="movie">🎬 Movies</option>
                 <option value="series">📺 Series</option>
               </select>
-              
+
               <button
                 onClick={() => handleSearch(searchQuery, searchType)}
                 disabled={loading}
@@ -251,10 +253,10 @@ function App() {
       {/* CONTENIDO PRINCIPAL: Se mantiene el margen superior para compensar el fixed header */}
       <div 
         className="container mx-auto px-4 py-8" 
-        style={{ paddingTop: `${headerHeight + 32}px` }}
+        style={{ paddingTop: `${headerHeight + 32}px` }} // Correcto
       >
-        
-        {/* LOADING */}
+
+        {/* LOADING (unchanged) */}
         {loading && (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-yellow-500"></div>
@@ -262,14 +264,14 @@ function App() {
           </div>
         )}
 
-        {/* ERROR */}
+        {/* ERROR (unchanged) */}
         {error && !loading && (
           <div className="max-w-2xl mx-auto bg-red-900/30 border border-red-500 rounded-xl p-6 text-center backdrop-blur-sm">
             <p className="text-red-200 text-lg">❌ {error}</p>
           </div>
         )}
 
-        {/* RESULTS */}
+        {/* RESULTS (unchanged) */}
         {results.length > 0 && !loading && (
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-6">
@@ -281,8 +283,8 @@ function App() {
                 {totalResults} results
               </span>
             </div>
-            
-            {/* FEEDBACK VISUAL: MENSAJE DESPUÉS DE LA PRIMERA SELECCIÓN */}
+
+            {/* FEEDBACK VISUAL: MENSAJE DESPUÉS DE LA PRIMERA SELECCIÓN (unchanged) */}
             {isFirstItemSelected && (
               <div className="max-w-3xl mx-auto bg-yellow-900/30 border border-yellow-500 rounded-xl p-4 text-center mb-6 backdrop-blur-sm">
                 <p className="text-yellow-200 text-lg font-semibold flex items-center justify-center gap-3">
@@ -319,7 +321,7 @@ function App() {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                  
+
                   <div className="p-4">
                     <h3 className="font-bold text-white text-sm line-clamp-2 mb-2">
                       {item.Title}
@@ -336,13 +338,13 @@ function App() {
                       }`}>
                         {item.Type === 'movie' ? '🎬 Movie' : '📺 Series'}
                       </span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* PAGINATION */}
-            {/* CORRECCIÓN DE ERROR DE SINTAXIS EN LA LÍNEA 344/345 */}
+            {/* PAGINATION (unchanged) */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-8">
                 <button
@@ -367,8 +369,8 @@ function App() {
           </div>
         )}
 
-        {/* COMPARISON SECTION */}
-        {(comparison[0] || comparison[1]) && (
+        {/* COMPARISON SECTION (unchanged) */}
+        {comparison[0] || comparison[1] ? (
           <div className="space-y-8" ref={comparisonRef}> 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -384,8 +386,8 @@ function App() {
               </button>
             </div>
 
-            {/* COMPARISON CARDS - Usar items-start para evitar desalineación vertical */}
-            <div className="grid lg:grid-cols-2 gap-8 items-start"> 
+            {/* COMPARISON CARDS (unchanged) */}
+            <div className="grid lg:grid-cols-2 gap-8">
               {/* CARD 1 */}
               <div className={`rounded-2xl p-6 backdrop-blur-sm border-2 transition-all ${
                 comparison[0] 
@@ -419,7 +421,7 @@ function App() {
               </div>
             </div>
 
-            {/* CHARTS */}
+            {/* CHARTS (unchanged) */}
             {comparison[0] && comparison[1] && (
               <div className="grid lg:grid-cols-2 gap-8">
                 {/* BAR CHART */}
@@ -444,7 +446,7 @@ function App() {
                   </ResponsiveContainer>
                 </div>
 
-                {/* RADAR CHART */}
+                {/* RADAR CHART (unchanged) */}
                 <div className="bg-slate-800/50 rounded-2xl p-6 backdrop-blur-sm border border-gray-700">
                   <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                     <Star className="w-6 h-6 text-yellow-500" />
@@ -464,10 +466,10 @@ function App() {
               </div>
             )}
           </div>
-        )}
+        ) : null}
       </div>
 
-      {/* FOOTER */}
+      {/* FOOTER (unchanged) */}
       <footer className="text-center py-8 text-gray-400 border-t border-gray-700 mt-12">
         <p>Powered by OMDb API • Built with React + Recharts + Vite</p>
       </footer>
@@ -475,9 +477,7 @@ function App() {
   );
 }
 
-// =======================================================
-// SEPARACIÓN DEL COMPONENTE DETAILED CARD (para mejor organización)
-// =======================================================
+// ========== DETAILED CARD COMPONENT (unchanged) ==========
 function DetailCard({ item, color }) {
   const accentColor = color === 'yellow' ? 'text-yellow-400' : 'text-indigo-400';
   const borderColor = color === 'yellow' ? 'border-yellow-500/20' : 'border-indigo-500/20';
@@ -485,14 +485,11 @@ function DetailCard({ item, color }) {
   return (
     <div className="space-y-6">
       <div className="relative rounded-xl overflow-hidden shadow-2xl">
-        {/* Contenedor con altura fija h-64 para la imagen (alineación) */}
-        <div className="w-full h-64"> 
-          <img
-            src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=No+Image'}
-            alt={item.Title}
-            className="w-full h-full object-cover"  
-          />
-        </div>
+        <img
+          src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=No+Image'}
+          alt={item.Title}
+          className="w-full h-64 object-cover" 
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <h3 className="text-3xl font-bold text-white mb-2">{item.Title}</h3>
@@ -505,7 +502,7 @@ function DetailCard({ item, color }) {
               <Clock className="w-4 h-4" />
               {item.Runtime}
             </span>
-        </div>
+          </div>
         </div>
       </div>
 
@@ -529,7 +526,7 @@ function DetailCard({ item, color }) {
           <p className="text-white text-sm">{item.Actors}</p>
         </div>
 
-        {/* Área de Plot con altura fija h-48 para igualar la altura de las tarjetas */}
+        {/* AJUSTE PARA IGUALAR ALTURA DE TARJETAS: h-48 y overflow-y-auto (unchanged) */}
         <div className={`bg-slate-900/50 rounded-xl p-4 border ${borderColor} h-48 overflow-y-auto`}> 
           <p className="text-gray-400 mb-2">📝 Plot</p>
           <p className="text-gray-300 text-sm leading-relaxed">{item.Plot}</p>
@@ -553,5 +550,5 @@ function DetailCard({ item, color }) {
     </div>
   );
 }
-
+ 
 export default App;
