@@ -14,6 +14,14 @@ function App() {
   const [totalResults, setTotalResults] = useState(0);
   const [comparison, setComparison] = useState([null, null]);
   const [error, setError] = useState('');
+  
+  // =======================================================
+  // 1. SMART HEADER STATE
+  // Se asume que el header tiene una altura de ~150px (h-40) para el cálculo de ocultamiento.
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const headerHeight = 150; // Aproximadamente la altura del header en pixeles (ajusta si es necesario)
+  // =======================================================
 
   // ========== UX: SCROLL REFERENCE ==========
   const comparisonRef = useRef(null);
@@ -33,7 +41,6 @@ function App() {
       const data = await response.json();
       
       if (data.Response === 'True') {
-        // Shuffle the initial results to make them feel "random" or "recommended"
         const shuffledResults = page === 1 && query === "best movies" 
             ? data.Search.sort(() => 0.5 - Math.random()) 
             : data.Search;
@@ -55,11 +62,37 @@ function App() {
 
   // ========== INITIAL LOAD (RECOMMENDATIONS) ==========
   useEffect(() => {
-    // Load default recommendations on initial component mount
     handleSearch("best movies", "", 1);
   }, [handleSearch]);
 
-  // ========== SELECT ITEM ==========
+  // =======================================================
+  // 2. SMART HEADER LOGIC (useEffect)
+  const controlHeader = useCallback(() => {
+    // Si el scroll está en la parte superior, siempre mostrar el header
+    if (window.scrollY < 50) { 
+        setShowHeader(true);
+    } 
+    // Si el usuario sube (scroll hacia arriba)
+    else if (window.scrollY < lastScrollY) {
+      setShowHeader(true);
+    } 
+    // Si el usuario baja (scroll hacia abajo)
+    else if (window.scrollY > lastScrollY && window.scrollY > headerHeight) {
+      setShowHeader(false);
+    }
+
+    setLastScrollY(window.scrollY);
+  }, [lastScrollY, headerHeight]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', controlHeader);
+    return () => {
+      window.removeEventListener('scroll', controlHeader);
+    };
+  }, [controlHeader]);
+  // =======================================================
+
+  // ========== SELECT ITEM (unchanged) ==========
   const selectItem = async (imdbID) => {
     setLoading(true);
     
@@ -79,14 +112,13 @@ function App() {
     setLoading(false);
   };
 
-  // ========== ADD TO COMPARISON - CORRECTED LOGIC ==========
+  // ========== ADD TO COMPARISON - CORRECTED LOGIC (unchanged) ==========
   const addToComparison = (item) => {
     if (comparison[0] === null) {
       setComparison([item, null]); 
     } else if (comparison[1] === null) {
       setComparison([comparison[0], item]);
     } else {
-      // Both full: Start a new comparison with the new item in the first slot
       setComparison([item, null]); 
     }
   };
@@ -150,7 +182,6 @@ function App() {
 
   // ========== UX: AUTO-SCROLL AJUSTADO (Reintroducido) ==========
   useEffect(() => {
-    // Si ambos slots están llenos, desplázate.
     if (comparison[0] && comparison[1] && comparisonRef.current) {
       comparisonRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -159,8 +190,16 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       
-      {/* HEADER: Más compacto y sticky */}
-      <header className="sticky top-0 z-50 bg-gray-800/95 backdrop-blur-lg shadow-xl border-b border-yellow-500/30">
+      {/* ======================================================= */}
+      {/* HEADER: SMART HEADER IMPLEMENTATION */}
+      {/* Utiliza 'fixed top-0' y transition-all para el efecto fluido */}
+      {/* La posición 'top' se ajusta con una clase dinámica */}
+      <header 
+        className={`fixed w-full z-50 bg-gray-800/95 backdrop-blur-lg shadow-xl border-b border-yellow-500/30 transition-all duration-300 ease-out 
+          ${showHeader ? 'top-0' : `top-[-${headerHeight}px]`}` // Oculta o muestra dinámicamente
+        }
+        style={{ height: `${headerHeight}px` }} // Fija la altura para el cálculo de ocultamiento
+      >
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-center gap-3 mb-3">
             <Film className="w-6 h-6 text-yellow-500" />
@@ -169,7 +208,7 @@ function App() {
             </h1>
           </div>
           
-          {/* SEARCH BAR (Compacta, ya implementada) */}
+          {/* SEARCH BAR (Compacta) */}
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="flex-1 relative">
@@ -205,10 +244,16 @@ function App() {
           </div>
         </div>
       </header>
+      {/* ======================================================= */}
 
-      <div className="container mx-auto px-4 py-8">
+
+      {/* CONTENIDO PRINCIPAL: Se añade un margen superior para compensar el fixed header */}
+      <div 
+        className="container mx-auto px-4 py-8" 
+        style={{ paddingTop: `${headerHeight + 32}px` }} // headerHeight + padding-top normal (32px de py-8)
+      >
         
-        {/* LOADING */}
+        {/* LOADING (unchanged) */}
         {loading && (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-yellow-500"></div>
@@ -216,14 +261,14 @@ function App() {
           </div>
         )}
 
-        {/* ERROR */}
+        {/* ERROR (unchanged) */}
         {error && !loading && (
           <div className="max-w-2xl mx-auto bg-red-900/30 border border-red-500 rounded-xl p-6 text-center backdrop-blur-sm">
             <p className="text-red-200 text-lg">❌ {error}</p>
           </div>
         )}
 
-        {/* RESULTS */}
+        {/* RESULTS (unchanged) */}
         {results.length > 0 && !loading && (
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-6">
@@ -236,7 +281,7 @@ function App() {
               </span>
             </div>
             
-            {/* FEEDBACK VISUAL: MENSAJE DESPUÉS DE LA PRIMERA SELECCIÓN */}
+            {/* FEEDBACK VISUAL: MENSAJE DESPUÉS DE LA PRIMERA SELECCIÓN (unchanged) */}
             {isFirstItemSelected && (
               <div className="max-w-3xl mx-auto bg-yellow-900/30 border border-yellow-500 rounded-xl p-4 text-center mb-6 backdrop-blur-sm">
                 <p className="text-yellow-200 text-lg font-semibold flex items-center justify-center gap-3">
@@ -254,7 +299,6 @@ function App() {
                   key={item.imdbID}
                   onClick={() => selectItem(item.imdbID)}
                   className={`group cursor-pointer bg-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm border transition-all transform hover:scale-105 hover:shadow-2xl ${
-                      // Estilo de acento visual si es el item seleccionado actualmente
                       comparison[0]?.imdbID === item.imdbID 
                       ? 'border-yellow-500 ring-4 ring-yellow-500/50' 
                       : 'border-gray-700 hover:border-yellow-500 hover:shadow-yellow-500/30'
@@ -297,7 +341,7 @@ function App() {
               ))}
             </div>
 
-            {/* PAGINATION */}
+            {/* PAGINATION (unchanged) */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-8">
                 <button
@@ -322,7 +366,7 @@ function App() {
           </div>
         )}
 
-        {/* COMPARISON SECTION */}
+        {/* COMPARISON SECTION (unchanged) */}
         {(comparison[0] || comparison[1]) && (
           <div className="space-y-8" ref={comparisonRef}> 
             <div className="flex items-center justify-between">
@@ -339,7 +383,7 @@ function App() {
               </button>
             </div>
 
-            {/* COMPARISON CARDS */}
+            {/* COMPARISON CARDS (unchanged) */}
             <div className="grid lg:grid-cols-2 gap-8">
               {/* CARD 1 */}
               <div className={`rounded-2xl p-6 backdrop-blur-sm border-2 transition-all ${
@@ -374,7 +418,7 @@ function App() {
               </div>
             </div>
 
-            {/* CHARTS */}
+            {/* CHARTS (unchanged) */}
             {comparison[0] && comparison[1] && (
               <div className="grid lg:grid-cols-2 gap-8">
                 {/* BAR CHART */}
@@ -422,7 +466,7 @@ function App() {
         )}
       </div>
 
-      {/* FOOTER */}
+      {/* FOOTER (unchanged) */}
       <footer className="text-center py-8 text-gray-400 border-t border-gray-700 mt-12">
         <p>Powered by OMDb API • Built with React + Recharts + Vite</p>
       </footer>
@@ -430,7 +474,7 @@ function App() {
   );
 }
 
-// ========== DETAILED CARD COMPONENT ==========
+// ========== DETAILED CARD COMPONENT (unchanged) ==========
 function DetailCard({ item, color }) {
   const accentColor = color === 'yellow' ? 'text-yellow-400' : 'text-indigo-400';
   const borderColor = color === 'yellow' ? 'border-yellow-500/20' : 'border-indigo-500/20';
