@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Film, Tv, X, TrendingUp, Star, Calendar, Clock, Users } from 'lucide-react';
+import { Search, Film, Tv, X, TrendingUp, Star, Calendar, Clock, Users, ArrowDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 
 const API_KEY = '9f68f335'; // YOUR CONFIGURED API KEY
@@ -15,7 +15,7 @@ function App() {
   const [comparison, setComparison] = useState([null, null]);
   const [error, setError] = useState('');
 
-  // ========== UX: SCROLL REFERENCE (Mantenido solo como referencia para la sección) ==========
+  // ========== UX: SCROLL REFERENCE ==========
   const comparisonRef = useRef(null);
 
   // ========== SEARCH LOGIC ==========
@@ -135,15 +135,17 @@ function App() {
   };
 
   const totalPages = Math.ceil(totalResults / 10);
+  
+  // Flag para saber si se seleccionó el primer item
+  const isFirstItemSelected = comparison[0] !== null && comparison[1] === null;
 
-  // ========== UX: AUTO-SCROLL (ELIMINADO A PETICIÓN) ==========
-  /*
+  // ========== UX: AUTO-SCROLL REINTRODUCIDO y AJUSTADO ==========
   useEffect(() => {
+    // Si ambos slots están llenos, desplázate.
     if (comparison[0] && comparison[1] && comparisonRef.current) {
       comparisonRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [comparison]);
-  */
 
   return (
     // STYLE: IMDb-like dark background
@@ -151,10 +153,10 @@ function App() {
       
       {/* HEADER - AJUSTES DE TAMAÑO PARA COMPACTAR */}
       <header className="sticky top-0 z-50 bg-gray-800/95 backdrop-blur-lg shadow-xl border-b border-yellow-500/30">
-        <div className="container mx-auto px-4 py-3"> {/* AJUSTADO: py-3 */}
-          <div className="flex items-center justify-center gap-3 mb-3"> {/* AJUSTADO: mb-3 */}
-            <Film className="w-6 h-6 text-yellow-500" /> {/* AJUSTADO: w-6 h-6 */}
-            <h1 className="text-2xl font-bold text-white"> {/* AJUSTADO: text-2xl */}
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <Film className="w-6 h-6 text-yellow-500" />
+            <h1 className="text-2xl font-bold text-white">
               Movie & Series Comparator
             </h1>
           </div>
@@ -169,7 +171,7 @@ function App() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Search movie or series..." // CORREGIDO: Sintaxis de string
+                  placeholder="Search movie or series..." 
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-700/50 text-white border border-gray-500/30 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition-all"
                 />
               </div>
@@ -224,19 +226,42 @@ function App() {
               </span>
             </div>
             
+            {/* FEEDBACK VISUAL: MENSAJE DESPUÉS DE LA PRIMERA SELECCIÓN */}
+            {isFirstItemSelected && (
+              <div className="max-w-3xl mx-auto bg-yellow-900/30 border border-yellow-500 rounded-xl p-4 text-center mb-6 backdrop-blur-sm">
+                <p className="text-yellow-200 text-lg font-semibold flex items-center justify-center gap-3">
+                  <ArrowDown className="w-5 h-5 animate-bounce" />
+                  You selected: <span className="text-white">{comparison[0].Title}</span>. Now choose the second item to compare!
+                  <ArrowDown className="w-5 h-5 animate-bounce" />
+                </p>
+              </div>
+            )}
+
+
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {results.map((item) => (
                 <div
                   key={item.imdbID}
                   onClick={() => selectItem(item.imdbID)}
-                  className="group cursor-pointer bg-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm border border-gray-700 hover:border-yellow-500 transition-all transform hover:scale-105 hover:shadow-2xl hover:shadow-yellow-500/30"
+                  className={`group cursor-pointer bg-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm border transition-all transform hover:scale-105 hover:shadow-2xl ${
+                      // Estilo de acento visual si es el item seleccionado actualmente
+                      comparison[0]?.imdbID === item.imdbID 
+                      ? 'border-yellow-500 ring-4 ring-yellow-500/50' 
+                      : 'border-gray-700 hover:border-yellow-500 hover:shadow-yellow-500/30'
+                  }`}
                 >
                   <div className="relative overflow-hidden">
                     <img
                       src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/300x450/1e293b/facc15?text=No+Image'}
                       alt={item.Title}
-                      className="w-full h-60 object-cover group-hover:scale-110 transition-transform duration-300" // <-- AJUSTADO: h-60
+                      className="w-full h-60 object-cover group-hover:scale-110 transition-transform duration-300" 
                     />
+                    {/* Overlay si es el item seleccionado */}
+                    {comparison[0]?.imdbID === item.imdbID && (
+                        <div className="absolute inset-0 bg-yellow-500/30 flex items-center justify-center text-white font-bold text-xl backdrop-blur-sm">
+                            SELECTED #1
+                        </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                   
