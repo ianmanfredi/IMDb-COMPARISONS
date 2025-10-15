@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react'; // <-- MODIFICADO: Agregado useRef y useEffect
 import { Search, Film, Tv, X, TrendingUp, Star, Calendar, Clock, Users } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 
@@ -14,6 +14,9 @@ function App() {
   const [totalResults, setTotalResults] = useState(0);
   const [comparison, setComparison] = useState([null, null]);
   const [error, setError] = useState('');
+
+  // ========== UX: REFERENCIA PARA SCROLL ==========
+  const comparisonRef = useRef(null); // <-- NUEVA LÍNEA: Referencia a la sección de comparación
 
   // ========== BÚSQUEDA ==========
   const handleSearch = async (page = 1) => {
@@ -119,15 +122,26 @@ function App() {
 
   const totalPages = Math.ceil(totalResults / 10);
 
+  // ========== UX: SCROLL AUTOMÁTICO ==========
+  useEffect(() => {
+    if (comparison[0] && comparison[1] && comparisonRef.current) {
+      comparisonRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [comparison]); // Se ejecuta cuando el estado de comparison cambia
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    // ESTILO: Fondo oscuro tipo IMDb
+    <div className="min-h-screen bg-gray-900 text-gray-100">
       
       {/* HEADER */}
-      <header className="sticky top-0 z-50 bg-gradient-to-r from-purple-900/95 to-indigo-900/95 backdrop-blur-lg shadow-2xl border-b border-purple-500/20">
+      {/* ESTILO: Header oscuro con borde amarillo/naranja */}
+      <header className="sticky top-0 z-50 bg-gray-800/95 backdrop-blur-lg shadow-xl border-b border-yellow-500/30">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-center gap-3 mb-6">
-            <Film className="w-10 h-10 text-purple-400" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            {/* ESTILO: Ícono de acento amarillo */}
+            <Film className="w-10 h-10 text-yellow-500" /> 
+            {/* ESTILO: Título blanco sólido */}
+            <h1 className="text-4xl font-bold text-white">
               Comparador de Películas y Series
             </h1>
           </div>
@@ -143,24 +157,27 @@ function App() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder="Buscar película o serie..."
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/50 text-white border border-purple-500/30 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                  // Clases de fondo oscuro y borde amarillo suave
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-700/50 text-white border border-gray-500/30 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition-all"
                 />
               </div>
               
               <select
                 value={searchType}
                 onChange={(e) => setSearchType(e.target.value)}
-                className="px-4 py-3 rounded-xl bg-slate-800/50 text-white border border-purple-500/30 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                // Clases de fondo oscuro y borde amarillo suave
+                className="px-4 py-3 rounded-xl bg-slate-700/50 text-white border border-gray-500/30 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
               >
                 <option value="">📺 Todo</option>
                 <option value="movie">🎬 Películas</option>
                 <option value="series">📺 Series</option>
               </select>
               
+              {/* ESTILO: Botón de acento amarillo/negro */}
               <button
                 onClick={() => handleSearch()}
                 disabled={loading}
-                className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl font-semibold transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-purple-500/50"
+                className="px-8 py-3 bg-yellow-500 text-black hover:bg-yellow-600 rounded-xl font-semibold transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-yellow-500/50"
               >
                 {loading ? '⏳ Buscando...' : '🔍 Buscar'}
               </button>
@@ -174,7 +191,7 @@ function App() {
         {/* LOADING */}
         {loading && (
           <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500"></div>
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-yellow-500"></div>
             <p className="mt-4 text-gray-300 text-lg">Cargando...</p>
           </div>
         )}
@@ -190,9 +207,10 @@ function App() {
         {results.length > 0 && !loading && (
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-6">
-              <TrendingUp className="w-6 h-6 text-purple-400" />
+              <TrendingUp className="w-6 h-6 text-yellow-500" /> {/* Ícono de acento amarillo */}
               <h2 className="text-3xl font-bold text-white">Resultados de Búsqueda</h2>
-              <span className="px-3 py-1 bg-purple-500/20 rounded-full text-purple-300 text-sm">
+              {/* Clase de acento amarillo suave */}
+              <span className="px-3 py-1 bg-yellow-500/20 rounded-full text-yellow-300 text-sm">
                 {totalResults} resultados
               </span>
             </div>
@@ -202,11 +220,12 @@ function App() {
                 <div
                   key={item.imdbID}
                   onClick={() => selectItem(item.imdbID)}
-                  className="group cursor-pointer bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl overflow-hidden backdrop-blur-sm border border-purple-500/20 hover:border-purple-500 transition-all transform hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/30"
+                  // Clases de tarjeta oscura con acento amarillo al hover
+                  className="group cursor-pointer bg-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm border border-gray-700 hover:border-yellow-500 transition-all transform hover:scale-105 hover:shadow-2xl hover:shadow-yellow-500/30"
                 >
                   <div className="relative overflow-hidden">
                     <img
-                      src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/300x450/1e293b/8b5cf6?text=Sin+Imagen'}
+                      src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/300x450/1e293b/facc15?text=Sin+Imagen'}
                       alt={item.Title}
                       className="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-300"
                     />
@@ -224,8 +243,8 @@ function App() {
                       </span>
                       <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${
                         item.Type === 'movie' 
-                          ? 'bg-purple-500/20 text-purple-300' 
-                          : 'bg-pink-500/20 text-pink-300'
+                          ? 'bg-yellow-500/20 text-yellow-300' // Acento amarillo para películas
+                          : 'bg-indigo-500/20 text-indigo-300' // Acento azul/índigo para series
                       }`}>
                         {item.Type === 'movie' ? '🎬 Película' : '📺 Serie'}
                       </span>
@@ -241,17 +260,17 @@ function App() {
                 <button
                   onClick={() => handleSearch(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-purple-500/20"
+                  className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-gray-700"
                 >
                   ← Anterior
                 </button>
-                <span className="px-6 py-3 bg-purple-500/20 rounded-xl text-purple-300 font-semibold border border-purple-500/30">
+                <span className="px-6 py-3 bg-yellow-500/20 rounded-xl text-yellow-300 font-semibold border border-yellow-500/30">
                   Página {currentPage} de {totalPages}
                 </span>
                 <button
                   onClick={() => handleSearch(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-purple-500/20"
+                  className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-gray-700"
                 >
                   Siguiente →
                 </button>
@@ -261,11 +280,12 @@ function App() {
         )}
 
         {/* SECCIÓN DE COMPARACIÓN */}
+        {/* UX: ref={comparisonRef} para el scroll automático */}
         {(comparison[0] || comparison[1]) && (
-          <div className="space-y-8">
+          <div className="space-y-8" ref={comparisonRef}> 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <TrendingUp className="w-8 h-8 text-purple-400" />
+                <TrendingUp className="w-8 h-8 text-yellow-500" /> {/* Ícono de acento amarillo */}
                 <h2 className="text-3xl font-bold text-white">Comparación</h2>
               </div>
               <button
@@ -282,11 +302,11 @@ function App() {
               {/* TARJETA 1 */}
               <div className={`rounded-2xl p-6 backdrop-blur-sm border-2 transition-all ${
                 comparison[0] 
-                  ? 'bg-gradient-to-br from-purple-900/30 to-purple-800/30 border-purple-500' 
+                  ? 'bg-slate-700/50 border-yellow-500' // Acento amarillo y fondo más sutil
                   : 'bg-slate-800/30 border-slate-700'
               }`}>
                 {comparison[0] ? (
-                  <DetailCard item={comparison[0]} color="purple" />
+                  <DetailCard item={comparison[0]} color="yellow" /> {/* Color de acento a amarillo */}
                 ) : (
                   <div className="text-center py-20 text-gray-400">
                     <Film className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -298,11 +318,11 @@ function App() {
               {/* TARJETA 2 */}
               <div className={`rounded-2xl p-6 backdrop-blur-sm border-2 transition-all ${
                 comparison[1] 
-                  ? 'bg-gradient-to-br from-pink-900/30 to-pink-800/30 border-pink-500' 
+                  ? 'bg-slate-700/50 border-indigo-500' // Acento azul/índigo y fondo más sutil
                   : 'bg-slate-800/30 border-slate-700'
               }`}>
                 {comparison[1] ? (
-                  <DetailCard item={comparison[1]} color="pink" />
+                  <DetailCard item={comparison[1]} color="indigo" /> {/* Color de acento a índigo */}
                 ) : (
                   <div className="text-center py-20 text-gray-400">
                     <Tv className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -316,9 +336,9 @@ function App() {
             {comparison[0] && comparison[1] && (
               <div className="grid lg:grid-cols-2 gap-8">
                 {/* GRÁFICO DE BARRAS */}
-                <div className="bg-slate-800/50 rounded-2xl p-6 backdrop-blur-sm border border-purple-500/20">
+                <div className="bg-slate-800/50 rounded-2xl p-6 backdrop-blur-sm border border-gray-700">
                   <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                    <TrendingUp className="w-6 h-6 text-purple-400" />
+                    <TrendingUp className="w-6 h-6 text-yellow-500" /> {/* Acento amarillo */}
                     Comparación de Calificaciones
                   </h3>
                   <ResponsiveContainer width="100%" height={300}>
@@ -327,20 +347,20 @@ function App() {
                       <XAxis dataKey="name" stroke="#9CA3AF" />
                       <YAxis domain={[0, 100]} stroke="#9CA3AF" />
                       <Tooltip 
-                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #8b5cf6', borderRadius: '8px' }}
+                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #eab308', borderRadius: '8px' }} // Borde amarillo
                         labelStyle={{ color: '#fff' }}
                       />
                       <Legend />
-                      <Bar dataKey={comparison[0].Title} fill="#a855f7" radius={[8, 8, 0, 0]} />
-                      <Bar dataKey={comparison[1].Title} fill="#ec4899" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey={comparison[0].Title} fill="#eab308" radius={[8, 8, 0, 0]} /> {/* Color barra 1: Amarillo */}
+                      <Bar dataKey={comparison[1].Title} fill="#4f46e5" radius={[8, 8, 0, 0]} /> {/* Color barra 2: Índigo */}
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
 
                 {/* GRÁFICO RADAR */}
-                <div className="bg-slate-800/50 rounded-2xl p-6 backdrop-blur-sm border border-purple-500/20">
+                <div className="bg-slate-800/50 rounded-2xl p-6 backdrop-blur-sm border border-gray-700">
                   <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                    <Star className="w-6 h-6 text-pink-400" />
+                    <Star className="w-6 h-6 text-yellow-500" /> {/* Acento amarillo */}
                     Vista Radar
                   </h3>
                   <ResponsiveContainer width="100%" height={300}>
@@ -348,8 +368,8 @@ function App() {
                       <PolarGrid stroke="#374151" />
                       <PolarAngleAxis dataKey="subject" stroke="#9CA3AF" />
                       <PolarRadiusAxis domain={[0, 100]} stroke="#9CA3AF" />
-                      <Radar name={comparison[0].Title} dataKey="A" stroke="#a855f7" fill="#a855f7" fillOpacity={0.6} />
-                      <Radar name={comparison[1].Title} dataKey="B" stroke="#ec4899" fill="#ec4899" fillOpacity={0.6} />
+                      <Radar name={comparison[0].Title} dataKey="A" stroke="#eab308" fill="#eab308" fillOpacity={0.6} /> {/* Color radar 1: Amarillo */}
+                      <Radar name={comparison[1].Title} dataKey="B" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.6} /> {/* Color radar 2: Índigo */}
                       <Legend />
                     </RadarChart>
                   </ResponsiveContainer>
@@ -361,20 +381,24 @@ function App() {
       </div>
 
       {/* FOOTER */}
-      <footer className="text-center py-8 text-gray-400 border-t border-purple-500/20 mt-12">
+      <footer className="text-center py-8 text-gray-400 border-t border-gray-700 mt-12">
         <p>Powered by OMDb API • Creado con React + Recharts + Vite</p>
       </footer>
     </div>
   );
 }
 
-// ========== COMPONENTE DE TARJETA DETALLADA ==========
+// ========== COMPONENTE DE TARJETA DETALLADA (Detalles estéticos ajustados) ==========
 function DetailCard({ item, color }) {
+  // Nota: El color aquí ahora será 'yellow' o 'indigo' según el argumento 'color'
+  const accentColor = color === 'yellow' ? 'text-yellow-400' : 'text-indigo-400';
+  const borderColor = color === 'yellow' ? 'border-yellow-500/20' : 'border-indigo-500/20';
+
   return (
     <div className="space-y-6">
       <div className="relative rounded-xl overflow-hidden shadow-2xl">
         <img
-          src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/8b5cf6?text=Sin+Imagen'}
+          src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=Sin+Imagen'}
           alt={item.Title}
           className="w-full h-96 object-cover"
         />
@@ -414,21 +438,23 @@ function DetailCard({ item, color }) {
           <p className="text-white text-sm">{item.Actors}</p>
         </div>
 
-        <div className="bg-slate-900/50 rounded-xl p-4 border border-purple-500/20">
+        {/* Borde sutil en lugar de morado */}
+        <div className={`bg-slate-900/50 rounded-xl p-4 border ${borderColor}`}> 
           <p className="text-gray-400 mb-2">📝 Sinopsis</p>
           <p className="text-gray-300 text-sm leading-relaxed">{item.Plot}</p>
         </div>
 
         <div>
           <p className="text-gray-400 mb-3 flex items-center gap-2">
-            <Star className="w-5 h-5 text-yellow-400" />
+            <Star className={`w-5 h-5 ${accentColor}`} />
             Calificaciones
           </p>
           <div className="space-y-2">
             {item.Ratings.map((rating, idx) => (
-              <div key={idx} className="flex justify-between items-center bg-slate-900/50 rounded-lg p-3 border border-purple-500/20">
+              <div key={idx} className={`flex justify-between items-center bg-slate-900/50 rounded-lg p-3 border ${borderColor}`}>
                 <span className="text-gray-300 text-sm">{rating.Source}</span>
-                <span className={`font-bold text-lg text-${color}-400`}>{rating.Value}</span>
+                {/* Texto de calificación con color de acento dinámico */}
+                <span className={`font-bold text-lg ${accentColor}`}>{rating.Value}</span> 
               </div>
             ))}
           </div>
