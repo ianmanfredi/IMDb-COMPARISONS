@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, Film, Tv, X, TrendingUp, Star, Calendar, Clock, Users } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 
-const API_KEY = '9f68f335'; // TU API KEY CONFIGURADA
+const API_KEY = '9f68f335'; // YOUR CONFIGURED API KEY
 const API_URL = 'https://www.omdbapi.com/';
 
 function App() {
@@ -15,10 +15,10 @@ function App() {
   const [comparison, setComparison] = useState([null, null]);
   const [error, setError] = useState('');
 
-  // ========== UX: REFERENCIA PARA SCROLL ==========
+  // ========== UX: SCROLL REFERENCE ==========
   const comparisonRef = useRef(null);
 
-  // ========== BÚSQUEDA ==========
+  // ========== SEARCH LOGIC ==========
   const handleSearch = async (page = 1) => {
     if (!searchQuery.trim()) return;
     
@@ -38,17 +38,17 @@ function App() {
       } else {
         setResults([]);
         setTotalResults(0);
-        setError(data.Error || 'No se encontraron resultados');
+        setError(data.Error || 'No results found for your query.'); // TRANSLATED
       }
     } catch (err) {
-      setError('Error al conectar con la API');
+      setError('Error connecting to the API.'); // TRANSLATED
       console.error(err);
     }
     
     setLoading(false);
   };
 
-  // ========== SELECCIONAR ITEM ==========
+  // ========== SELECT ITEM ==========
   const selectItem = async (imdbID) => {
     setLoading(true);
     
@@ -62,91 +62,108 @@ function App() {
         addToComparison(data);
       }
     } catch (err) {
-      console.error('Error al obtener detalles:', err);
+      console.error('Error fetching details:', err);
     }
     
     setLoading(false);
   };
 
-  // ========== AGREGAR A COMPARACIÓN ==========
+  // ========== ADD TO COMPARISON - CORRECTED LOGIC ==========
   const addToComparison = (item) => {
     if (comparison[0] === null) {
-      setComparison([item, null]);
+      setComparison([item, null]); // 1. First slot empty
     } else if (comparison[1] === null) {
-      setComparison([comparison[0], item]);
+      setComparison([comparison[0], item]); // 2. Second slot empty
     } else {
-      setComparison([comparison[0], item]);
+      // 3. Both full: Start a new comparison with the new item in the first slot
+      setComparison([item, null]); 
     }
   };
 
-  // ========== NORMALIZAR CALIFICACIONES ==========
+  // ========== NORMALIZE RATINGS - CORRECTED LOGIC for IMDb/Metacritic/RT ==========
   const normalizeRating = (source, value) => {
     if (source.includes('Internet Movie Database')) {
-      return parseFloat(value.split('/')[0]) * 10;
+        // IMDb is typically X.X/10 or just X.X, we need the X.X
+        const numericValue = parseFloat(value.split('/')[0]);
+        return numericValue * 10;
     } else if (source.includes('Rotten Tomatoes')) {
-      return parseInt(value);
+        // Rotten Tomatoes is typically X%
+        return parseInt(value.replace('%', ''));
     } else if (source.includes('Metacritic')) {
-      return parseInt(value.split('/')[0]);
+        // Metacritic is typically X/100
+        return parseInt(value.split('/')[0]);
     }
     return 0;
   };
 
-  // ========== DATOS PARA GRÁFICOS ==========
+  // ========== GET CHART DATA - CORRECTED to use exact source names ==========
   const getChartData = () => {
     if (!comparison[0] || !comparison[1]) return [];
 
-    const sources = ['IMDb', 'Rotten Tomatoes', 'Metacritic'];
+    // Use exact source names as they appear in the OMDb API response
+    const sources = ['Internet Movie Database', 'Rotten Tomatoes', 'Metacritic'];
     
     return sources.map(source => {
-      const rating1 = comparison[0].Ratings.find(r => r.Source.includes(source));
-      const rating2 = comparison[1].Ratings.find(r => r.Source.includes(source));
+      const rating1 = comparison[0].Ratings.find(r => r.Source === source);
+      const rating2 = comparison[1].Ratings.find(r => r.Source === source);
       
+      // Use clean names for chart display
+      const displayName = source.replace('Internet Movie Database', 'IMDb').replace('Rotten Tomatoes', 'RT');
+
       return {
-        name: source,
+        name: displayName,
         [comparison[0].Title]: rating1 ? normalizeRating(rating1.Source, rating1.Value) : 0,
         [comparison[1].Title]: rating2 ? normalizeRating(rating2.Source, rating2.Value) : 0
       };
     });
   };
 
+  // ========== GET RADAR DATA - CORRECTED to use exact source names ==========
   const getRadarData = () => {
     if (!comparison[0] || !comparison[1]) return [];
     
-    return comparison[0].Ratings.map((r, idx) => ({
-      subject: r.Source.replace('Internet Movie Database', 'IMDb').replace('Rotten Tomatoes', 'RT'),
-      A: normalizeRating(r.Source, r.Value),
-      B: comparison[1].Ratings[idx] ? normalizeRating(comparison[1].Ratings[idx].Source, comparison[1].Ratings[idx].Value) : 0,
-      fullMark: 100
-    }));
+    // We base the subjects on the ratings available in item 1
+    const data1 = comparison[0].Ratings;
+    const data2 = comparison[1].Ratings;
+
+    return data1.map(r1 => {
+        const r2 = data2.find(r => r.Source === r1.Source);
+
+        const displayName = r1.Source.replace('Internet Movie Database', 'IMDb').replace('Rotten Tomatoes', 'RT');
+
+        return {
+          subject: displayName,
+          A: normalizeRating(r1.Source, r1.Value),
+          B: r2 ? normalizeRating(r2.Source, r2.Value) : 0,
+          fullMark: 100
+        }
+    });
   };
 
   const totalPages = Math.ceil(totalResults / 10);
 
-  // ========== UX: SCROLL AUTOMÁTICO ==========
+  // ========== UX: AUTO-SCROLL ==========
   useEffect(() => {
     if (comparison[0] && comparison[1] && comparisonRef.current) {
       comparisonRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [comparison]); // Se ejecuta cuando el estado de comparison cambia
+  }, [comparison]);
 
   return (
-    // ESTILO: Fondo oscuro tipo IMDb
+    // STYLE: IMDb-like dark background
     <div className="min-h-screen bg-gray-900 text-gray-100">
       
-      {/* HEADER */}
-      {/* ESTILO: Header oscuro con borde amarillo/naranja */}
+      {/* HEADER - ADJUSTED SIZE AND TRANSLATED */}
       <header className="sticky top-0 z-50 bg-gray-800/95 backdrop-blur-lg shadow-xl border-b border-yellow-500/30">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            {/* ESTILO: Ícono de acento amarillo */}
-            <Film className="w-10 h-10 text-yellow-500" /> 
-            {/* ESTILO: Título blanco sólido */}
-            <h1 className="text-4xl font-bold text-white">
-              Comparador de Películas y Series
-            </h1>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Film className="w-8 h-8 text-yellow-500" />
+            <h1 className="text-3xl font-bold text-white">
+              Movie & Series Comparator
+            </h1> {/* TRANSLATED */}
           </div>
           
-          {/* BUSCADOR */}
+          {/* SEARCH BAR */}
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="flex-1 relative">
@@ -156,8 +173,7 @@ function App() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Buscar película o serie..."
-                  // Clases de fondo oscuro y borde amarillo suave
+                  placeholder="Search movie or series..." {/* TRANSLATED */}
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-700/50 text-white border border-gray-500/30 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition-all"
                 />
               </div>
@@ -165,21 +181,19 @@ function App() {
               <select
                 value={searchType}
                 onChange={(e) => setSearchType(e.target.value)}
-                // Clases de fondo oscuro y borde amarillo suave
                 className="px-4 py-3 rounded-xl bg-slate-700/50 text-white border border-gray-500/30 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
               >
-                <option value="">📺 Todo</option>
-                <option value="movie">🎬 Películas</option>
-                <option value="series">📺 Series</option>
+                <option value="">📺 All</option> {/* TRANSLATED */}
+                <option value="movie">🎬 Movies</option> {/* TRANSLATED */}
+                <option value="series">📺 Series</option> {/* TRANSLATED */}
               </select>
               
-              {/* ESTILO: Botón de acento amarillo/negro */}
               <button
                 onClick={() => handleSearch()}
                 disabled={loading}
                 className="px-8 py-3 bg-yellow-500 text-black hover:bg-yellow-600 rounded-xl font-semibold transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-yellow-500/50"
               >
-                {loading ? '⏳ Buscando...' : '🔍 Buscar'}
+                {loading ? '⏳ Searching...' : '🔍 Search'} {/* TRANSLATED */}
               </button>
             </div>
           </div>
@@ -192,7 +206,7 @@ function App() {
         {loading && (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-yellow-500"></div>
-            <p className="mt-4 text-gray-300 text-lg">Cargando...</p>
+            <p className="mt-4 text-gray-300 text-lg">Loading...</p> {/* TRANSLATED */}
           </div>
         )}
 
@@ -203,15 +217,14 @@ function App() {
           </div>
         )}
 
-        {/* RESULTADOS */}
+        {/* RESULTS */}
         {results.length > 0 && !loading && (
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-6">
-              <TrendingUp className="w-6 h-6 text-yellow-500" /> {/* Ícono de acento amarillo */}
-              <h2 className="text-3xl font-bold text-white">Resultados de Búsqueda</h2>
-              {/* Clase de acento amarillo suave */}
+              <TrendingUp className="w-6 h-6 text-yellow-500" />
+              <h2 className="text-3xl font-bold text-white">Search Results</h2> {/* TRANSLATED */}
               <span className="px-3 py-1 bg-yellow-500/20 rounded-full text-yellow-300 text-sm">
-                {totalResults} resultados
+                {totalResults} results {/* TRANSLATED */}
               </span>
             </div>
             
@@ -220,12 +233,11 @@ function App() {
                 <div
                   key={item.imdbID}
                   onClick={() => selectItem(item.imdbID)}
-                  // Clases de tarjeta oscura con acento amarillo al hover
                   className="group cursor-pointer bg-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm border border-gray-700 hover:border-yellow-500 transition-all transform hover:scale-105 hover:shadow-2xl hover:shadow-yellow-500/30"
                 >
                   <div className="relative overflow-hidden">
                     <img
-                      src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/300x450/1e293b/facc15?text=Sin+Imagen'}
+                      src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/300x450/1e293b/facc15?text=No+Image'} // TRANSLATED
                       alt={item.Title}
                       className="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-300"
                     />
@@ -243,10 +255,10 @@ function App() {
                       </span>
                       <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${
                         item.Type === 'movie' 
-                          ? 'bg-yellow-500/20 text-yellow-300' // Acento amarillo para películas
-                          : 'bg-indigo-500/20 text-indigo-300' // Acento azul/índigo para series
+                          ? 'bg-yellow-500/20 text-yellow-300'
+                          : 'bg-indigo-500/20 text-indigo-300'
                       }`}>
-                        {item.Type === 'movie' ? '🎬 Película' : '📺 Serie'}
+                        {item.Type === 'movie' ? '🎬 Movie' : '📺 Series'} {/* TRANSLATED */}
                       </span>
                     </div>
                   </div>
@@ -254,7 +266,7 @@ function App() {
               ))}
             </div>
 
-            {/* PAGINACIÓN */}
+            {/* PAGINATION */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-8">
                 <button
@@ -262,47 +274,46 @@ function App() {
                   disabled={currentPage === 1}
                   className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-gray-700"
                 >
-                  ← Anterior
+                  ← Previous {/* TRANSLATED */}
                 </button>
                 <span className="px-6 py-3 bg-yellow-500/20 rounded-xl text-yellow-300 font-semibold border border-yellow-500/30">
-                  Página {currentPage} de {totalPages}
+                  Page {currentPage} of {totalPages}
                 </span>
                 <button
                   onClick={() => handleSearch(currentPage + 1)}
                   disabled={currentPage === totalPages}
                   className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-gray-700"
                 >
-                  Siguiente →
+                  Next → {/* TRANSLATED */}
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* SECCIÓN DE COMPARACIÓN */}
-        {/* UX: ref={comparisonRef} para el scroll automático */}
+        {/* COMPARISON SECTION */}
         {(comparison[0] || comparison[1]) && (
           <div className="space-y-8" ref={comparisonRef}> 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <TrendingUp className="w-8 h-8 text-yellow-500" /> {/* Ícono de acento amarillo */}
-                <h2 className="text-3xl font-bold text-white">Comparación</h2>
+                <TrendingUp className="w-8 h-8 text-yellow-500" />
+                <h2 className="text-3xl font-bold text-white">Comparison</h2> {/* TRANSLATED */}
               </div>
               <button
                 onClick={() => setComparison([null, null])}
                 className="px-6 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-xl transition-all border border-red-500/30 flex items-center gap-2"
               >
                 <X className="w-5 h-5" />
-                Limpiar
+                Clear {/* TRANSLATED */}
               </button>
             </div>
 
-            {/* TARJETAS DE COMPARACIÓN */}
+            {/* COMPARISON CARDS */}
             <div className="grid lg:grid-cols-2 gap-8">
-              {/* TARJETA 1 */}
+              {/* CARD 1 */}
               <div className={`rounded-2xl p-6 backdrop-blur-sm border-2 transition-all ${
                 comparison[0] 
-                  ? 'bg-slate-700/50 border-yellow-500' // Acento amarillo y fondo más sutil
+                  ? 'bg-slate-700/50 border-yellow-500'
                   : 'bg-slate-800/30 border-slate-700'
               }`}>
                 {comparison[0] ? (
@@ -310,15 +321,15 @@ function App() {
                 ) : (
                   <div className="text-center py-20 text-gray-400">
                     <Film className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg">Selecciona una película o serie</p>
+                    <p className="text-lg">Select a Movie or Series</p> {/* TRANSLATED */}
                   </div>
                 )}
               </div>
 
-              {/* TARJETA 2 */}
+              {/* CARD 2 */}
               <div className={`rounded-2xl p-6 backdrop-blur-sm border-2 transition-all ${
                 comparison[1] 
-                  ? 'bg-slate-700/50 border-indigo-500' // Acento azul/índigo y fondo más sutil
+                  ? 'bg-slate-700/50 border-indigo-500'
                   : 'bg-slate-800/30 border-slate-700'
               }`}>
                 {comparison[1] ? (
@@ -326,50 +337,50 @@ function App() {
                 ) : (
                   <div className="text-center py-20 text-gray-400">
                     <Tv className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg">Selecciona otra para comparar</p>
+                    <p className="text-lg">Select another one to compare</p> {/* TRANSLATED */}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* GRÁFICOS */}
+            {/* CHARTS */}
             {comparison[0] && comparison[1] && (
               <div className="grid lg:grid-cols-2 gap-8">
-                {/* GRÁFICO DE BARRAS */}
+                {/* BAR CHART */}
                 <div className="bg-slate-800/50 rounded-2xl p-6 backdrop-blur-sm border border-gray-700">
                   <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                    <TrendingUp className="w-6 h-6 text-yellow-500" /> {/* Acento amarillo */}
-                    Comparación de Calificaciones
-                  </h3>
+                    <TrendingUp className="w-6 h-6 text-yellow-500" />
+                    Rating Comparison
+                  </h3> {/* TRANSLATED */}
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={getChartData()}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="name" stroke="#9CA3AF" />
                       <YAxis domain={[0, 100]} stroke="#9CA3AF" />
                       <Tooltip 
-                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #eab308', borderRadius: '8px' }} // Borde amarillo
+                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #eab308', borderRadius: '8px' }}
                         labelStyle={{ color: '#fff' }}
                       />
                       <Legend />
-                      <Bar dataKey={comparison[0].Title} fill="#eab308" radius={[8, 8, 0, 0]} /> {/* Color barra 1: Amarillo */}
-                      <Bar dataKey={comparison[1].Title} fill="#4f46e5" radius={[8, 8, 0, 0]} /> {/* Color barra 2: Índigo */}
+                      <Bar dataKey={comparison[0].Title} fill="#eab308" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey={comparison[1].Title} fill="#4f46e5" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
 
-                {/* GRÁFICO RADAR */}
+                {/* RADAR CHART */}
                 <div className="bg-slate-800/50 rounded-2xl p-6 backdrop-blur-sm border border-gray-700">
                   <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                    <Star className="w-6 h-6 text-yellow-500" /> {/* Acento amarillo */}
-                    Vista Radar
-                  </h3>
+                    <Star className="w-6 h-6 text-yellow-500" />
+                    Radar View
+                  </h3> {/* TRANSLATED */}
                   <ResponsiveContainer width="100%" height={300}>
                     <RadarChart data={getRadarData()}>
                       <PolarGrid stroke="#374151" />
                       <PolarAngleAxis dataKey="subject" stroke="#9CA3AF" />
                       <PolarRadiusAxis domain={[0, 100]} stroke="#9CA3AF" />
-                      <Radar name={comparison[0].Title} dataKey="A" stroke="#eab308" fill="#eab308" fillOpacity={0.6} /> {/* Color radar 1: Amarillo */}
-                      <Radar name={comparison[1].Title} dataKey="B" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.6} /> {/* Color radar 2: Índigo */}
+                      <Radar name={comparison[0].Title} dataKey="A" stroke="#eab308" fill="#eab308" fillOpacity={0.6} />
+                      <Radar name={comparison[1].Title} dataKey="B" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.6} />
                       <Legend />
                     </RadarChart>
                   </ResponsiveContainer>
@@ -382,15 +393,14 @@ function App() {
 
       {/* FOOTER */}
       <footer className="text-center py-8 text-gray-400 border-t border-gray-700 mt-12">
-        <p>Powered by OMDb API • Creado con React + Recharts + Vite</p>
+        <p>Powered by OMDb API • Built with React + Recharts + Vite</p> {/* TRANSLATED */}
       </footer>
     </div>
   );
 }
 
-// ========== COMPONENTE DE TARJETA DETALLADA (Detalles estéticos ajustados) ==========
+// ========== DETAILED CARD COMPONENT (Size and translation adjusted) ==========
 function DetailCard({ item, color }) {
-  // Nota: El color aquí ahora será 'yellow' o 'indigo' según el argumento 'color'
   const accentColor = color === 'yellow' ? 'text-yellow-400' : 'text-indigo-400';
   const borderColor = color === 'yellow' ? 'border-yellow-500/20' : 'border-indigo-500/20';
 
@@ -398,9 +408,9 @@ function DetailCard({ item, color }) {
     <div className="space-y-6">
       <div className="relative rounded-xl overflow-hidden shadow-2xl">
         <img
-          src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=Sin+Imagen'}
+          src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=No+Image'} // TRANSLATED
           alt={item.Title}
-          className="w-full h-96 object-cover"
+          className="w-full h-80 object-cover" // ADJUSTED: h-80 for smaller image
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -421,11 +431,11 @@ function DetailCard({ item, color }) {
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-gray-400 mb-1">Director</p>
+            <p className="text-gray-400 mb-1">Director</p> {/* TRANSLATED */}
             <p className="text-white font-semibold">{item.Director}</p>
           </div>
           <div>
-            <p className="text-gray-400 mb-1">Género</p>
+            <p className="text-gray-400 mb-1">Genre</p> {/* TRANSLATED */}
             <p className="text-white font-semibold">{item.Genre}</p>
           </div>
         </div>
@@ -433,27 +443,25 @@ function DetailCard({ item, color }) {
         <div>
           <p className="text-gray-400 mb-2 flex items-center gap-2">
             <Users className="w-4 h-4" />
-            Actores
+            Actors {/* TRANSLATED */}
           </p>
           <p className="text-white text-sm">{item.Actors}</p>
         </div>
 
-        {/* Borde sutil en lugar de morado */}
         <div className={`bg-slate-900/50 rounded-xl p-4 border ${borderColor}`}> 
-          <p className="text-gray-400 mb-2">📝 Sinopsis</p>
+          <p className="text-gray-400 mb-2">📝 Plot</p> {/* TRANSLATED */}
           <p className="text-gray-300 text-sm leading-relaxed">{item.Plot}</p>
         </div>
 
         <div>
           <p className="text-gray-400 mb-3 flex items-center gap-2">
             <Star className={`w-5 h-5 ${accentColor}`} />
-            Calificaciones
+            Ratings {/* TRANSLATED */}
           </p>
           <div className="space-y-2">
             {item.Ratings.map((rating, idx) => (
               <div key={idx} className={`flex justify-between items-center bg-slate-900/50 rounded-lg p-3 border ${borderColor}`}>
                 <span className="text-gray-300 text-sm">{rating.Source}</span>
-                {/* Texto de calificación con color de acento dinámico */}
                 <span className={`font-bold text-lg ${accentColor}`}>{rating.Value}</span> 
               </div>
             ))}
