@@ -139,7 +139,7 @@ function App() {
   // Flag para saber si se seleccionó el primer item
   const isFirstItemSelected = comparison[0] !== null && comparison[1] === null;
 
-  // ========== UX: AUTO-SCROLL REINTRODUCIDO y AJUSTADO ==========
+  // ========== UX: AUTO-SCROLL AJUSTADO ==========
   useEffect(() => {
     // Si ambos slots están llenos, desplázate.
     if (comparison[0] && comparison[1] && comparisonRef.current) {
@@ -431,7 +431,7 @@ function DetailCard({ item, color }) {
         <img
           src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=No+Image'}
           alt={item.Title}
-          className="w-full h-80 object-cover"
+          className="w-full h-64 object-cover" // <--- CAMBIO PARA REDUCIR TAMAÑO
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6">
