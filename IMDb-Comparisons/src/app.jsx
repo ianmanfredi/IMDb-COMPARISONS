@@ -342,6 +342,7 @@ function App() {
             </div>
 
             {/* PAGINATION */}
+            {/* CORRECCIÓN DE ERROR DE SINTAXIS EN LA LÍNEA 344/345 */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-8">
                 <button
@@ -489,7 +490,7 @@ function DetailCard({ item, color }) {
           <img
             src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=No+Image'}
             alt={item.Title}
-            className="w-full h-full object-cover"  
+            className="w-full h-full object-cover"  
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
