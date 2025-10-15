@@ -1,6 +1,7 @@
 {
   "name": "comparador-peliculas",
   "version": "1.0.0",
+  "type": "module", 
   "description": "Comparador de Películas y Series con React y OMDb API",
   "scripts": {
     "dev": "vite",
