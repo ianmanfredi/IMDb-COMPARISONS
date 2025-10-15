@@ -15,7 +15,7 @@ function App() {
   const [comparison, setComparison] = useState([null, null]);
   const [error, setError] = useState('');
 
-  // ========== UX: SCROLL REFERENCE ==========
+  // ========== UX: SCROLL REFERENCE (Mantenido solo como referencia para la sección) ==========
   const comparisonRef = useRef(null);
 
   // ========== SEARCH LOGIC ==========
@@ -38,10 +38,10 @@ function App() {
       } else {
         setResults([]);
         setTotalResults(0);
-        setError(data.Error || 'No results found for your query.'); // TRANSLATED
+        setError(data.Error || 'No results found for your query.');
       }
     } catch (err) {
-      setError('Error connecting to the API.'); // TRANSLATED
+      setError('Error connecting to the API.');
       console.error(err);
     }
     
@@ -71,43 +71,38 @@ function App() {
   // ========== ADD TO COMPARISON - CORRECTED LOGIC ==========
   const addToComparison = (item) => {
     if (comparison[0] === null) {
-      setComparison([item, null]); // 1. First slot empty
+      setComparison([item, null]); 
     } else if (comparison[1] === null) {
-      setComparison([comparison[0], item]); // 2. Second slot empty
+      setComparison([comparison[0], item]);
     } else {
-      // 3. Both full: Start a new comparison with the new item in the first slot
+      // Both full: Start a new comparison with the new item in the first slot
       setComparison([item, null]); 
     }
   };
 
-  // ========== NORMALIZE RATINGS - CORRECTED LOGIC for IMDb/Metacritic/RT ==========
+  // ========== NORMALIZE RATINGS ==========
   const normalizeRating = (source, value) => {
     if (source.includes('Internet Movie Database')) {
-        // IMDb is typically X.X/10 or just X.X, we need the X.X
         const numericValue = parseFloat(value.split('/')[0]);
         return numericValue * 10;
     } else if (source.includes('Rotten Tomatoes')) {
-        // Rotten Tomatoes is typically X%
         return parseInt(value.replace('%', ''));
     } else if (source.includes('Metacritic')) {
-        // Metacritic is typically X/100
         return parseInt(value.split('/')[0]);
     }
     return 0;
   };
 
-  // ========== GET CHART DATA - CORRECTED to use exact source names ==========
+  // ========== GET CHART DATA ==========
   const getChartData = () => {
     if (!comparison[0] || !comparison[1]) return [];
 
-    // Use exact source names as they appear in the OMDb API response
     const sources = ['Internet Movie Database', 'Rotten Tomatoes', 'Metacritic'];
     
     return sources.map(source => {
       const rating1 = comparison[0].Ratings.find(r => r.Source === source);
       const rating2 = comparison[1].Ratings.find(r => r.Source === source);
       
-      // Use clean names for chart display
       const displayName = source.replace('Internet Movie Database', 'IMDb').replace('Rotten Tomatoes', 'RT');
 
       return {
@@ -118,11 +113,10 @@ function App() {
     });
   };
 
-  // ========== GET RADAR DATA - CORRECTED to use exact source names ==========
+  // ========== GET RADAR DATA ==========
   const getRadarData = () => {
     if (!comparison[0] || !comparison[1]) return [];
     
-    // We base the subjects on the ratings available in item 1
     const data1 = comparison[0].Ratings;
     const data2 = comparison[1].Ratings;
 
@@ -142,25 +136,27 @@ function App() {
 
   const totalPages = Math.ceil(totalResults / 10);
 
-  // ========== UX: AUTO-SCROLL ==========
+  // ========== UX: AUTO-SCROLL (ELIMINADO A PETICIÓN) ==========
+  /*
   useEffect(() => {
     if (comparison[0] && comparison[1] && comparisonRef.current) {
       comparisonRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [comparison]);
+  */
 
   return (
     // STYLE: IMDb-like dark background
     <div className="min-h-screen bg-gray-900 text-gray-100">
       
-      {/* HEADER - ADJUSTED SIZE AND TRANSLATED */}
+      {/* HEADER - AJUSTES DE TAMAÑO PARA COMPACTAR */}
       <header className="sticky top-0 z-50 bg-gray-800/95 backdrop-blur-lg shadow-xl border-b border-yellow-500/30">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Film className="w-8 h-8 text-yellow-500" />
-            <h1 className="text-3xl font-bold text-white">
+        <div className="container mx-auto px-4 py-3"> {/* AJUSTADO: py-3 */}
+          <div className="flex items-center justify-center gap-3 mb-3"> {/* AJUSTADO: mb-3 */}
+            <Film className="w-6 h-6 text-yellow-500" /> {/* AJUSTADO: w-6 h-6 */}
+            <h1 className="text-2xl font-bold text-white"> {/* AJUSTADO: text-2xl */}
               Movie & Series Comparator
-            </h1> {/* TRANSLATED */}
+            </h1>
           </div>
           
           {/* SEARCH BAR */}
@@ -173,7 +169,7 @@ function App() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Search movie or series..." // CORRECTED: Removed JSX comment here
+                  placeholder="Search movie or series..." // CORREGIDO: Sintaxis de string
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-700/50 text-white border border-gray-500/30 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition-all"
                 />
               </div>
@@ -183,9 +179,9 @@ function App() {
                 onChange={(e) => setSearchType(e.target.value)}
                 className="px-4 py-3 rounded-xl bg-slate-700/50 text-white border border-gray-500/30 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
               >
-                <option value="">📺 All</option> {/* TRANSLATED */}
-                <option value="movie">🎬 Movies</option> {/* TRANSLATED */}
-                <option value="series">📺 Series</option> {/* TRANSLATED */}
+                <option value="">📺 All</option>
+                <option value="movie">🎬 Movies</option>
+                <option value="series">📺 Series</option>
               </select>
               
               <button
@@ -193,7 +189,7 @@ function App() {
                 disabled={loading}
                 className="px-8 py-3 bg-yellow-500 text-black hover:bg-yellow-600 rounded-xl font-semibold transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-yellow-500/50"
               >
-                {loading ? '⏳ Searching...' : '🔍 Search'} {/* TRANSLATED */}
+                {loading ? '⏳ Searching...' : '🔍 Search'}
               </button>
             </div>
           </div>
@@ -206,7 +202,7 @@ function App() {
         {loading && (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-yellow-500"></div>
-            <p className="mt-4 text-gray-300 text-lg">Loading...</p> {/* TRANSLATED */}
+            <p className="mt-4 text-gray-300 text-lg">Loading...</p>
           </div>
         )}
 
@@ -222,9 +218,9 @@ function App() {
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-6">
               <TrendingUp className="w-6 h-6 text-yellow-500" />
-              <h2 className="text-3xl font-bold text-white">Search Results</h2> {/* TRANSLATED */}
+              <h2 className="text-3xl font-bold text-white">Search Results</h2>
               <span className="px-3 py-1 bg-yellow-500/20 rounded-full text-yellow-300 text-sm">
-                {totalResults} results {/* TRANSLATED */}
+                {totalResults} results
               </span>
             </div>
             
@@ -237,9 +233,9 @@ function App() {
                 >
                   <div className="relative overflow-hidden">
                     <img
-                      src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/300x450/1e293b/facc15?text=No+Image'} // TRANSLATED
+                      src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/300x450/1e293b/facc15?text=No+Image'}
                       alt={item.Title}
-                      className="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-300"
+                      className="w-full h-60 object-cover group-hover:scale-110 transition-transform duration-300" // <-- AJUSTADO: h-60
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
@@ -258,7 +254,7 @@ function App() {
                           ? 'bg-yellow-500/20 text-yellow-300'
                           : 'bg-indigo-500/20 text-indigo-300'
                       }`}>
-                        {item.Type === 'movie' ? '🎬 Movie' : '📺 Series'} {/* TRANSLATED */}
+                        {item.Type === 'movie' ? '🎬 Movie' : '📺 Series'}
                       </span>
                     </div>
                   </div>
@@ -274,7 +270,7 @@ function App() {
                   disabled={currentPage === 1}
                   className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-gray-700"
                 >
-                  ← Previous {/* TRANSLATED */}
+                  ← Previous
                 </button>
                 <span className="px-6 py-3 bg-yellow-500/20 rounded-xl text-yellow-300 font-semibold border border-yellow-500/30">
                   Page {currentPage} of {totalPages}
@@ -284,7 +280,7 @@ function App() {
                   disabled={currentPage === totalPages}
                   className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-gray-700"
                 >
-                  Next → {/* TRANSLATED */}
+                  Next →
                 </button>
               </div>
             )}
@@ -297,14 +293,14 @@ function App() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <TrendingUp className="w-8 h-8 text-yellow-500" />
-                <h2 className="text-3xl font-bold text-white">Comparison</h2> {/* TRANSLATED */}
+                <h2 className="text-3xl font-bold text-white">Comparison</h2>
               </div>
               <button
                 onClick={() => setComparison([null, null])}
                 className="px-6 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-xl transition-all border border-red-500/30 flex items-center gap-2"
               >
                 <X className="w-5 h-5" />
-                Clear {/* TRANSLATED */}
+                Clear
               </button>
             </div>
 
@@ -321,7 +317,7 @@ function App() {
                 ) : (
                   <div className="text-center py-20 text-gray-400">
                     <Film className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg">Select a Movie or Series</p> {/* TRANSLATED */}
+                    <p className="text-lg">Select a Movie or Series</p>
                   </div>
                 )}
               </div>
@@ -337,7 +333,7 @@ function App() {
                 ) : (
                   <div className="text-center py-20 text-gray-400">
                     <Tv className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg">Select another one to compare</p> {/* TRANSLATED */}
+                    <p className="text-lg">Select another one to compare</p>
                   </div>
                 )}
               </div>
@@ -351,7 +347,7 @@ function App() {
                   <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                     <TrendingUp className="w-6 h-6 text-yellow-500" />
                     Rating Comparison
-                  </h3> {/* TRANSLATED */}
+                  </h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={getChartData()}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -373,7 +369,7 @@ function App() {
                   <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                     <Star className="w-6 h-6 text-yellow-500" />
                     Radar View
-                  </h3> {/* TRANSLATED */}
+                  </h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <RadarChart data={getRadarData()}>
                       <PolarGrid stroke="#374151" />
@@ -393,13 +389,13 @@ function App() {
 
       {/* FOOTER */}
       <footer className="text-center py-8 text-gray-400 border-t border-gray-700 mt-12">
-        <p>Powered by OMDb API • Built with React + Recharts + Vite</p> {/* TRANSLATED */}
+        <p>Powered by OMDb API • Built with React + Recharts + Vite</p>
       </footer>
     </div>
   );
 }
 
-// ========== DETAILED CARD COMPONENT (Size and translation adjusted) ==========
+// ========== DETAILED CARD COMPONENT ==========
 function DetailCard({ item, color }) {
   const accentColor = color === 'yellow' ? 'text-yellow-400' : 'text-indigo-400';
   const borderColor = color === 'yellow' ? 'border-yellow-500/20' : 'border-indigo-500/20';
@@ -408,9 +404,9 @@ function DetailCard({ item, color }) {
     <div className="space-y-6">
       <div className="relative rounded-xl overflow-hidden shadow-2xl">
         <img
-          src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=No+Image'} // TRANSLATED
+          src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=No+Image'}
           alt={item.Title}
-          className="w-full h-80 object-cover" // ADJUSTED: h-80 for smaller image
+          className="w-full h-80 object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -431,11 +427,11 @@ function DetailCard({ item, color }) {
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-gray-400 mb-1">Director</p> {/* TRANSLATED */}
+            <p className="text-gray-400 mb-1">Director</p>
             <p className="text-white font-semibold">{item.Director}</p>
           </div>
           <div>
-            <p className="text-gray-400 mb-1">Genre</p> {/* TRANSLATED */}
+            <p className="text-gray-400 mb-1">Genre</p>
             <p className="text-white font-semibold">{item.Genre}</p>
           </div>
         </div>
@@ -443,20 +439,21 @@ function DetailCard({ item, color }) {
         <div>
           <p className="text-gray-400 mb-2 flex items-center gap-2">
             <Users className="w-4 h-4" />
-            Actors {/* TRANSLATED */}
+            Actors
           </p>
           <p className="text-white text-sm">{item.Actors}</p>
         </div>
 
-        <div className={`bg-slate-900/50 rounded-xl p-4 border ${borderColor}`}> 
-          <p className="text-gray-400 mb-2">📝 Plot</p> {/* TRANSLATED */}
+        {/* AJUSTE PARA IGUALAR ALTURA DE TARJETAS: h-48 y overflow-y-auto */}
+        <div className={`bg-slate-900/50 rounded-xl p-4 border ${borderColor} h-48 overflow-y-auto`}> 
+          <p className="text-gray-400 mb-2">📝 Plot</p>
           <p className="text-gray-300 text-sm leading-relaxed">{item.Plot}</p>
         </div>
 
         <div>
           <p className="text-gray-400 mb-3 flex items-center gap-2">
             <Star className={`w-5 h-5 ${accentColor}`} />
-            Ratings {/* TRANSLATED */}
+            Ratings
           </p>
           <div className="space-y-2">
             {item.Ratings.map((rating, idx) => (
