@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, Film, Tv, X, TrendingUp, Star, Calendar, Clock, Users, ArrowDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 
@@ -19,8 +19,8 @@ function App() {
   const comparisonRef = useRef(null);
 
   // ========== SEARCH LOGIC ==========
-  const handleSearch = async (page = 1) => {
-    if (!searchQuery.trim()) return;
+  const handleSearch = useCallback(async (query, type, page = 1) => {
+    if (!query.trim()) return;
     
     setLoading(true);
     setError('');
@@ -28,12 +28,17 @@ function App() {
     
     try {
       const response = await fetch(
-        `${API_URL}?apikey=${API_KEY}&s=${searchQuery}&type=${searchType}&page=${page}`
+        `${API_URL}?apikey=${API_KEY}&s=${query}&type=${type}&page=${page}`
       );
       const data = await response.json();
       
       if (data.Response === 'True') {
-        setResults(data.Search);
+        // Shuffle the initial results to make them feel "random" or "recommended"
+        const shuffledResults = page === 1 && query === "best movies" 
+            ? data.Search.sort(() => 0.5 - Math.random()) 
+            : data.Search;
+
+        setResults(shuffledResults);
         setTotalResults(parseInt(data.totalResults));
       } else {
         setResults([]);
@@ -46,7 +51,13 @@ function App() {
     }
     
     setLoading(false);
-  };
+  }, []);
+
+  // ========== INITIAL LOAD (RECOMMENDATIONS) ==========
+  useEffect(() => {
+    // Load default recommendations on initial component mount
+    handleSearch("best movies", "", 1);
+  }, [handleSearch]);
 
   // ========== SELECT ITEM ==========
   const selectItem = async (imdbID) => {
@@ -80,7 +91,7 @@ function App() {
     }
   };
 
-  // ========== NORMALIZE RATINGS ==========
+  // ========== NORMALIZE RATINGS (unchanged) ==========
   const normalizeRating = (source, value) => {
     if (source.includes('Internet Movie Database')) {
         const numericValue = parseFloat(value.split('/')[0]);
@@ -93,7 +104,7 @@ function App() {
     return 0;
   };
 
-  // ========== GET CHART DATA ==========
+  // ========== GET CHART DATA (unchanged) ==========
   const getChartData = () => {
     if (!comparison[0] || !comparison[1]) return [];
 
@@ -113,7 +124,7 @@ function App() {
     });
   };
 
-  // ========== GET RADAR DATA ==========
+  // ========== GET RADAR DATA (unchanged) ==========
   const getRadarData = () => {
     if (!comparison[0] || !comparison[1]) return [];
     
@@ -135,11 +146,9 @@ function App() {
   };
 
   const totalPages = Math.ceil(totalResults / 10);
-  
-  // Flag para saber si se seleccionó el primer item
   const isFirstItemSelected = comparison[0] !== null && comparison[1] === null;
 
-  // ========== UX: AUTO-SCROLL AJUSTADO ==========
+  // ========== UX: AUTO-SCROLL AJUSTADO (Reintroducido) ==========
   useEffect(() => {
     // Si ambos slots están llenos, desplázate.
     if (comparison[0] && comparison[1] && comparisonRef.current) {
@@ -148,10 +157,9 @@ function App() {
   }, [comparison]);
 
   return (
-    // STYLE: IMDb-like dark background
     <div className="min-h-screen bg-gray-900 text-gray-100">
       
-      {/* HEADER - AJUSTES DE TAMAÑO PARA COMPACTAR */}
+      {/* HEADER: Más compacto y sticky */}
       <header className="sticky top-0 z-50 bg-gray-800/95 backdrop-blur-lg shadow-xl border-b border-yellow-500/30">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-center gap-3 mb-3">
@@ -161,7 +169,7 @@ function App() {
             </h1>
           </div>
           
-          {/* SEARCH BAR */}
+          {/* SEARCH BAR (Compacta, ya implementada) */}
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="flex-1 relative">
@@ -170,7 +178,7 @@ function App() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch(searchQuery, searchType)}
                   placeholder="Search movie or series..." 
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-700/50 text-white border border-gray-500/30 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition-all"
                 />
@@ -187,7 +195,7 @@ function App() {
               </select>
               
               <button
-                onClick={() => handleSearch()}
+                onClick={() => handleSearch(searchQuery, searchType)}
                 disabled={loading}
                 className="px-8 py-3 bg-yellow-500 text-black hover:bg-yellow-600 rounded-xl font-semibold transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-yellow-500/50"
               >
@@ -220,7 +228,9 @@ function App() {
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-6">
               <TrendingUp className="w-6 h-6 text-yellow-500" />
-              <h2 className="text-3xl font-bold text-white">Search Results</h2>
+              <h2 className="text-3xl font-bold text-white">
+                {searchQuery ? "Search Results" : "Recommended for You"} 
+              </h2>
               <span className="px-3 py-1 bg-yellow-500/20 rounded-full text-yellow-300 text-sm">
                 {totalResults} results
               </span>
@@ -291,7 +301,7 @@ function App() {
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-8">
                 <button
-                  onClick={() => handleSearch(currentPage - 1)}
+                  onClick={() => handleSearch(searchQuery || "best movies", searchType, currentPage - 1)}
                   disabled={currentPage === 1}
                   className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-gray-700"
                 >
@@ -301,7 +311,7 @@ function App() {
                   Page {currentPage} of {totalPages}
                 </span>
                 <button
-                  onClick={() => handleSearch(currentPage + 1)}
+                  onClick={() => handleSearch(searchQuery || "best movies", searchType, currentPage + 1)}
                   disabled={currentPage === totalPages}
                   className="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-gray-700"
                 >
@@ -431,7 +441,7 @@ function DetailCard({ item, color }) {
         <img
           src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=No+Image'}
           alt={item.Title}
-          className="w-full h-64 object-cover" // <--- CAMBIO PARA REDUCIR TAMAÑO
+          className="w-full h-64 object-cover" 
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6">
