@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'; // <-- MODIFICADO: Agregado useRef y useEffect
+import React, { useState, useRef, useEffect } from 'react';
 import { Search, Film, Tv, X, TrendingUp, Star, Calendar, Clock, Users } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 
@@ -16,7 +16,7 @@ function App() {
   const [error, setError] = useState('');
 
   // ========== UX: REFERENCIA PARA SCROLL ==========
-  const comparisonRef = useRef(null); // <-- NUEVA LÍNEA: Referencia a la sección de comparación
+  const comparisonRef = useRef(null);
 
   // ========== BÚSQUEDA ==========
   const handleSearch = async (page = 1) => {
@@ -306,7 +306,7 @@ function App() {
                   : 'bg-slate-800/30 border-slate-700'
               }`}>
                 {comparison[0] ? (
-                  <DetailCard item={comparison[0]} color="yellow" /> {/* Color de acento a amarillo */}
+                  <DetailCard item={comparison[0]} color="yellow" /> 
                 ) : (
                   <div className="text-center py-20 text-gray-400">
                     <Film className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -322,7 +322,7 @@ function App() {
                   : 'bg-slate-800/30 border-slate-700'
               }`}>
                 {comparison[1] ? (
-                  <DetailCard item={comparison[1]} color="indigo" /> {/* Color de acento a índigo */}
+                  <DetailCard item={comparison[1]} color="indigo" /> 
                 ) : (
                   <div className="text-center py-20 text-gray-400">
                     <Tv className="w-16 h-16 mx-auto mb-4 opacity-50" />
