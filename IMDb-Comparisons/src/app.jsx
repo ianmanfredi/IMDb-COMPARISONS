@@ -197,11 +197,11 @@ function App() {
       {/* Se usa 'style' para el desplazamiento dinámico */}
       <header 
         className={`fixed w-full z-50 bg-gray-800/95 backdrop-blur-lg shadow-xl border-b border-yellow-500/30 transition-all duration-300 ease-out`}
-        // >>> APLICACIÓN DEL DESPLAZAMIENTO NEGATIVO CORRECTA:
-        style={{ 
-            height: `${headerHeight}px`,
-            top: showHeader ? '0px' : `-${headerHeight}px` // CORREGIDO: Usar propiedad 'style' para el top dinámico.
-        }} 
+        // >>> APLICACIÓN DEL DESPLAZAMIENTO NEGATIVO CORRECTA:
+        style={{ 
+            height: `${headerHeight}px`,
+            top: showHeader ? '0px' : `-${headerHeight}px` // CORREGIDO: Usar propiedad 'style' para el top dinámico.
+        }} 
       >
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-center gap-3 mb-3">
@@ -338,7 +338,6 @@ function App() {
                       }`}>
                         {item.Type === 'movie' ? '🎬 Movie' : '📺 Series'}
                       </span>
-                    </div>
                   </div>
                 </div>
               ))}
@@ -369,7 +368,7 @@ function App() {
           </div>
         )}
 
-        {/* COMPARISON SECTION (unchanged) */}
+        {/* COMPARISON SECTION (MODIFICADO) */}
         {(comparison[0] || comparison[1]) && (
           <div className="space-y-8" ref={comparisonRef}> 
             <div className="flex items-center justify-between">
@@ -386,8 +385,8 @@ function App() {
               </button>
             </div>
 
-            {/* COMPARISON CARDS (unchanged) */}
-            <div className="grid lg:grid-cols-2 gap-8">
+            {/* COMPARISON CARDS - CORRECCIÓN: Usar items-start para evitar desalineación vertical */}
+            <div className="grid lg:grid-cols-2 gap-8 items-start"> 
               {/* CARD 1 */}
               <div className={`rounded-2xl p-6 backdrop-blur-sm border-2 transition-all ${
                 comparison[0] 
@@ -477,7 +476,7 @@ function App() {
   );
 }
 
-// ========== DETAILED CARD COMPONENT (unchanged) ==========
+// ========== DETAILED CARD COMPONENT (MODIFICADO) ==========
 function DetailCard({ item, color }) {
   const accentColor = color === 'yellow' ? 'text-yellow-400' : 'text-indigo-400';
   const borderColor = color === 'yellow' ? 'border-yellow-500/20' : 'border-indigo-500/20';
@@ -485,11 +484,14 @@ function DetailCard({ item, color }) {
   return (
     <div className="space-y-6">
       <div className="relative rounded-xl overflow-hidden shadow-2xl">
-        <img
-          src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=No+Image'}
-          alt={item.Title}
-          className="w-full h-64 object-cover" 
-        />
+        {/* CORRECCIÓN: Se envuelve la imagen en un div con altura fija para asegurar la alineación */}
+        <div className="w-full h-64"> 
+          <img
+            src={item.Poster !== 'N/A' ? item.Poster : 'https://via.placeholder.com/400x600/1e293b/facc15?text=No+Image'}
+            alt={item.Title}
+            className="w-full h-full object-cover"  // h-full para que ocupe toda la altura del div padre (h-64)
+          />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <h3 className="text-3xl font-bold text-white mb-2">{item.Title}</h3>
