@@ -2,9 +2,6 @@
 
 Aplicación web para buscar y comparar películas y series usando React y la API de OMDb.
 
-## 🚀 Demo en Vivo
-
-🔗 [Ver Demo](https://tu-proyecto.vercel.app) _(después de deployar)_
 
 ## ✨ Características
 
